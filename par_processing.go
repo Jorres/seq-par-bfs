@@ -39,7 +39,8 @@ func parFor2(arr []int, f func(int, int)) {
 	for i := 0; i < blocks; i++ {
 		go func(curBlock int) {
 			for k := curBlock*parBlockSize; k < min((curBlock+1)*parBlockSize, len(arr)); k++ {
-				f(k, arr[k])
+				val := arr[k]
+				f(k, val)
 			}
 			wg.Done()
 		}(i)

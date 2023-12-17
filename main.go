@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sync/atomic"
 )
 
@@ -44,7 +43,7 @@ func seqBFS(edges [][]int, start, cubeSide int) []int {
 
 	q := NewRingBufferQueue()
 	ans[start] = 0
-  q.push(start)
+	q.push(start)
 
 	for !q.empty() {
 		v := q.pop()
@@ -59,40 +58,42 @@ func seqBFS(edges [][]int, start, cubeSide int) []int {
 	return ans
 }
 
-func parBFS(edges [][]int, start, cubeSide int) []atomic.Int32 {
+func parBFS(edges [][]int, start, cubeSide int) []int {
 	front := []int{}
 	front = append(front, start)
 
-	dist := make([]atomic.Int32, nVertices(cubeSide))
+	visited := make([]atomic.Bool, nVertices(cubeSide))
+	dist := make([]int, nVertices(cubeSide))
 
-	for i := 0; i < (cubeSide - 1)*3; i++ { // TODO better handling on when we are done
-    fmt.Println(front)
+	for i := 0; i < (cubeSide-1)*3; i++ { // TODO better handling on when we are done
 		degs := parScan(front, 0, len(front), func(a, b int) int {
 			return a + len(edges[b])
 		}, 0)
 
-    newFront := make([]int, degs[len(degs) - 1])
-    parInit(newFront, -1)
+		newFront := make([]int, degs[len(degs)-1])
 
 		parFor2(front, func(pos, v int) {
-      curShift := 0
+			curShift := 0
+			blockShift := 0
+			if pos > 0 {
+				blockShift = degs[pos-1]
+			}
+
 			for _, to := range edges[v] {
-        newDist := dist[to].Load() + 1
-				if dist[to].CompareAndSwap(0, newDist) {
-          newFront[degs[pos] + curShift] = to
-        }
+				if visited[to].CompareAndSwap(false, true) {
+					newFront[blockShift+curShift] = to
+					dist[to] = dist[v] + 1
+					curShift++
+				}
 			}
 		})
 
-    front = parFilter(newFront, 0, len(newFront), func(a int) bool {
-      return a != -1
-    })
+		front = parFilter(newFront, 0, len(newFront), func(a int) bool {
+			return a != 0
+		})
 	}
-  return dist
+	return dist
 }
 
 func main() {
-	// cubeSide := 10
-	// edges := initCubicGraph(cubeSide)
-	// ans := seqBFS(edges, 0, cubeSide)
 }
