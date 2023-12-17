@@ -7,35 +7,9 @@ import (
 	"time"
 )
 
-const cubeSide = 100
+const cubeSide = 300
 
 var edges = initCubicGraph(cubeSide)
-
-// func TestSeqBfs(t *testing.T) {
-// 	// gcpercent := debug.SetGCPercent(-1)
-// 	// memlimit := debug.SetMemoryLimit(math.MaxInt64)
-
-// 	start := time.Now()
-// 	ans := seqBFS(edges, 0, cubeSide)
-// 	elapsed := time.Since(start)
-
-// 	// debug.SetGCPercent(gcpercent)
-// 	// debug.SetMemoryLimit(memlimit)
-
-// 	t.Logf("Sequential BFS-only execution time: %v", elapsed)
-
-// 	for i := 0; i < cubeSide; i++ {
-// 		for j := 0; j < cubeSide; j++ {
-// 			for k := 0; k < cubeSide; k++ {
-// 				vNum := idFromIJK(i, j, k, cubeSide)
-// 				if ans[vNum] != i+j+k {
-// 					t.Errorf("At position (%v, %v, %v) dist = %v; want %v", i, j, k, ans[vNum], i+j+k)
-// 					t.FailNow()
-// 				}
-// 			}
-// 		}
-// 	}
-// }
 
 func TestParBfs(t *testing.T) {
 	gcpercent := debug.SetGCPercent(-1)
@@ -62,3 +36,30 @@ func TestParBfs(t *testing.T) {
 		}
 	}
 }
+
+func TestSeqBfs(t *testing.T) {
+	// gcpercent := debug.SetGCPercent(-1)
+	// memlimit := debug.SetMemoryLimit(math.MaxInt64)
+
+	start := time.Now()
+	ans := seqBFS(edges, 0, cubeSide)
+	elapsed := time.Since(start)
+
+	// debug.SetGCPercent(gcpercent)
+	// debug.SetMemoryLimit(memlimit)
+
+	t.Logf("Sequential BFS-only execution time: %v", elapsed)
+
+	for i := 0; i < cubeSide; i++ {
+		for j := 0; j < cubeSide; j++ {
+			for k := 0; k < cubeSide; k++ {
+				vNum := idFromIJK(i, j, k, cubeSide)
+				if ans[vNum] != i+j+k {
+					t.Errorf("At position (%v, %v, %v) dist = %v; want %v", i, j, k, ans[vNum], i+j+k)
+					t.FailNow()
+				}
+			}
+		}
+	}
+}
+

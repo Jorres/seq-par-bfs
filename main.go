@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sync/atomic"
+	// "sync/atomic"
 )
 
 func nVertices(cubeSide int) int {
@@ -63,20 +63,21 @@ func parBFS(edges [][]int, start, cubeSide int) []int {
 	front := []int{}
 	front = append(front, start)
 
-	from := make([]atomic.Int32, nVertices(cubeSide))
+	from := make([]int, nVertices(cubeSide))
 	dist := make([]int, nVertices(cubeSide))
 
 	for i := 0; i < (cubeSide-1)*3; i++ { // TODO better handling on when we are done
+		parFor2(front, func(pos, v int) {
+			for _, to := range edges[v] {
+				// from[to].Store(int32(v))
+				from[to] = v
+			}
+		})
+
 		degs := parScan(front, 0, len(front), func(a, b int) int {
 			return a + len(edges[b])
 		}, 0)
 		newFront := make([]int, degs[len(degs)-1])
-
-		parFor2(front, func(pos, v int) {
-			for _, to := range edges[v] {
-				from[to].Store(int32(v))
-			}
-		})
 
 		parFor2(front, func(pos, v int) {
 			shift := 0
@@ -85,8 +86,9 @@ func parBFS(edges [][]int, start, cubeSide int) []int {
 			}
 
 			for _, to := range edges[v] {
-				from[to].Store(int32(v))
-				if int(from[to].Load()) == v {
+				// from[to].Store(int32(v))
+				// if int(from[to].Load()) == v {
+				if from[to] == v {
 					newFront[shift] = to
 					dist[to] = dist[v] + 1
 					shift++
