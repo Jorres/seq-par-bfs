@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const cubeSide = 400
+const cubeSide = 100
 
 var edges = initCubicGraph(cubeSide)
 

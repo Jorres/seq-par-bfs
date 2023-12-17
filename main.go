@@ -63,15 +63,20 @@ func parBFS(edges [][]int, start, cubeSide int) []int {
 	front := []int{}
 	front = append(front, start)
 
-	visited := make([]atomic.Bool, nVertices(cubeSide))
+	from := make([]atomic.Int32, nVertices(cubeSide))
 	dist := make([]int, nVertices(cubeSide))
 
 	for i := 0; i < (cubeSide-1)*3; i++ { // TODO better handling on when we are done
 		degs := parScan(front, 0, len(front), func(a, b int) int {
 			return a + len(edges[b])
 		}, 0)
-
 		newFront := make([]int, degs[len(degs)-1])
+
+		parFor2(front, func(pos, v int) {
+			for _, to := range edges[v] {
+				from[to].Store(int32(v))
+			}
+		})
 
 		parFor2(front, func(pos, v int) {
 			shift := 0
@@ -80,7 +85,8 @@ func parBFS(edges [][]int, start, cubeSide int) []int {
 			}
 
 			for _, to := range edges[v] {
-				if visited[to].CompareAndSwap(false, true) {
+				from[to].Store(int32(v))
+				if int(from[to].Load()) == v {
 					newFront[shift] = to
 					dist[to] = dist[v] + 1
 					shift++
