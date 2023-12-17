@@ -41,16 +41,17 @@ func seqBFS(edges [][]int, start, cubeSide int) []int {
 		ans[i] = -1
 	}
 
-	q := NewRingBufferQueue()
+	q := []int{}
+	q = append(q, start)
 	ans[start] = 0
-	q.push(start)
 
-	for !q.empty() {
-		v := q.pop()
+	for len(q) > 0 {
+		v := q[0]
+		q = q[1:]
 		for _, to := range edges[v] {
 			if ans[to] == -1 {
 				ans[to] = ans[v] + 1
-				q.push(to)
+				q = append(q, to)
 			}
 		}
 	}
@@ -73,17 +74,16 @@ func parBFS(edges [][]int, start, cubeSide int) []int {
 		newFront := make([]int, degs[len(degs)-1])
 
 		parFor2(front, func(pos, v int) {
-			curShift := 0
-			blockShift := 0
+			shift := 0
 			if pos > 0 {
-				blockShift = degs[pos-1]
+				shift = degs[pos-1]
 			}
 
 			for _, to := range edges[v] {
 				if visited[to].CompareAndSwap(false, true) {
-					newFront[blockShift+curShift] = to
+					newFront[shift] = to
 					dist[to] = dist[v] + 1
-					curShift++
+					shift++
 				}
 			}
 		})

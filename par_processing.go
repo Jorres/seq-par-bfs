@@ -5,8 +5,8 @@ import (
 	"sync"
 )
 
-const parBlockSize = 2000
-const scanBlockSize = 2000
+const parBlockSize = 1000
+const scanBlockSize = 1000
 
 func min(a, b int) int {
 	if a < b {
@@ -42,26 +42,6 @@ func parFor2(arr []int, f func(int, int)) {
 				val := arr[k]
 				f(k, val)
 			}
-			wg.Done()
-		}(i)
-	}
-	wg.Wait()
-}
-
-func parInit(arr []int, val int) {
-	blocks := int(math.Ceil(float64(len(arr)) / parBlockSize))
-	var wg sync.WaitGroup
-
-  initer := func(curBlock int) {
-		for k := curBlock*parBlockSize; k < min((curBlock+1)*scanBlockSize, len(arr)); k++ {
-			arr[k] = val
-		}
-	}
-
-	wg.Add(blocks)
-	for i := 0; i < blocks; i++ {
-		go func(curBlock int) {
-			initer(curBlock)
 			wg.Done()
 		}(i)
 	}
