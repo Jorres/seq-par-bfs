@@ -31,16 +31,15 @@ func parFor(n int, f func(int)) {
 	wg.Wait()
 }
 
-func parFor2(arr []int, f func(int, int)) {
-	blocks := int(math.Ceil(float64(len(arr)) / parBlockSize))
+func parFor2(arr []int, l, r int, f func(int, int)) {
+	blocks := int(math.Ceil(float64(r-l) / parBlockSize))
 	var wg sync.WaitGroup
 
 	wg.Add(blocks)
 	for i := 0; i < blocks; i++ {
 		go func(curBlock int) {
-			for k := curBlock*parBlockSize; k < min((curBlock+1)*parBlockSize, len(arr)); k++ {
-				val := arr[k]
-				f(k, val)
+			for k := l + curBlock*parBlockSize; k < min(l+(curBlock+1)*parBlockSize, r); k++ {
+				f(k, arr[k])
 			}
 			wg.Done()
 		}(i)
@@ -110,9 +109,29 @@ func parMap(a, b []int, l, r int, f func(int) int) {
 	wg.Wait()
 }
 
-func parFilter(a []int, l, r int, f func(int) bool) []int {
+func parMapFlags(a []int, b []int8, l, r int, f func(int) int8) {
 	if r-l < parBlockSize {
-		var ans []int
+		for i := l; i < r; i++ {
+			b[i] = f(a[i])
+		}
+		return
+	}
+
+	m := l + (r-l)/2
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		parMapFlags(a, b, l, m, f)
+		wg.Done()
+	}()
+	parMapFlags(a, b, m, r, f)
+	wg.Wait()
+}
+
+func parFilter(a []int, l, r int, f func(int) bool, old []int) []int {
+	if r-l < parBlockSize {
+		ans := old
 		for i := l; i < r; i++ {
 			if f(a[i]) {
 				ans = append(ans, a[i])
@@ -121,12 +140,12 @@ func parFilter(a []int, l, r int, f func(int) bool) []int {
 		return ans
 	}
 
-	flags := make([]int, r-l)
-	parMap(a, flags, l, r, func(x int) int {
+	flags := make([]int8, r-l)
+	parMapFlags(a, flags, l, r, func(x int) int8 {
 		if f(x) {
-			return 1
+			return int8(1)
 		}
-		return 0
+		return int8(0)
 	})
 
 	blocks := int(math.Ceil(float64(r-l) / parBlockSize))
@@ -135,13 +154,13 @@ func parFilter(a []int, l, r int, f func(int) bool) []int {
 	parFor(blocks, func(curBlock int) {
 		curBlockVal := 0
 		for k := l + curBlock*parBlockSize; k < min(l+(curBlock+1)*parBlockSize, r); k++ {
-			curBlockVal = curBlockVal + flags[k]
+			curBlockVal = curBlockVal + int(flags[k])
 		}
 		sums[curBlock] = curBlockVal
 	})
 
 	sums = parScan(sums, 0, len(sums), sum, 0)
-	ans := make([]int, sums[len(sums)-1])
+	ans := old[:sums[len(sums)-1]]
 
 	parFor(blocks, func(curBlock int) {
 		shift := 0
