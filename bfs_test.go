@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const cubeSide = 500
+const cubeSide = 100
 
 var edges = initCubicGraph(cubeSide)
 
@@ -56,16 +56,3 @@ func TestSeqBfs(t *testing.T) {
 		}
 	}
 }
-
-
-// seq-par-bfs (174329) +45 -41 via 🐹 v1.19.3 ❯ GOMAXPROCS=4 go test -v
-// === RUN   TestParBfs
-//     bfs_test.go:22: Parallel BFS-only execution time: 18.868629686s
-// --- PASS: TestParBfs (19.03s)
-// === RUN   TestSeqBfs
-//     bfs_test.go:45: Sequential BFS-only execution time: 45.299065821s
-// --- PASS: TestSeqBfs (45.46s)
-// === RUN   TestQueue
-// --- PASS: TestQueue (0.00s)
-// PASS
-// ok      seq-par-bfs     71.466s

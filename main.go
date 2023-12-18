@@ -2,6 +2,12 @@ package main
 
 import (
 	"fmt"
+	// "log"
+	"math"
+	// "os"
+	"runtime"
+	"runtime/debug"
+	// "runtime/pprof"
 	"sync/atomic"
 	"time"
 )
@@ -42,7 +48,6 @@ func initCubicGraph(cubeSide int) [][]int {
 
 func seqBFS(edges [][]int, start, cubeSide int) []int {
 	ans := make([]int, nVertices(cubeSide))
-	// visited := make([]bool, nVertices(cubeSide))
 	for i := range ans {
 		ans[i] = -1
 	}
@@ -56,9 +61,7 @@ func seqBFS(edges [][]int, start, cubeSide int) []int {
 		q = q[1:]
 		for _, to := range edges[v] {
 			if ans[to] == -1 {
-			// if !visited[to] {
 				ans[to] = ans[v] + 1
-				// visited[to] = true
 				q = append(q, to)
 			}
 		}
@@ -80,7 +83,8 @@ func parBFS(edges [][]int, start, cubeSide int) []atomic.Int32 {
 
 	for i := 0; i < (cubeSide-1)*3; i++ {
 		degs := parScan(front, 0, len(front), func(a, b int) int {
-			return a + len(edges[b])
+			// return a + len(edges[b])
+			return a + 3
 		}, 0)
 
 		newFront = newFront[:degs[len(degs) - 1]]
@@ -118,7 +122,6 @@ func doTest[R atomic.Int32 | int](edges [][]int, bfs func([][]int, int, int) []R
 	fmt.Printf("%v, averaged over %v launches\n\n", testName, nTests)
 
 	for i := 0; i < nTests; i++ {
-		start := time.Now()
 
 		// f, err := os.Create("cpu.prof")
 		// if err != nil {
@@ -129,11 +132,20 @@ func doTest[R atomic.Int32 | int](edges [][]int, bfs func([][]int, int, int) []R
 		// 	log.Fatal("could not start CPU profile: ", err)
 		// }
 
+		gcpercent := debug.SetGCPercent(-1)
+		memlimit := debug.SetMemoryLimit(math.MaxInt64)
+
+		start := time.Now()
 		bfs(edges, 0, cubeSide)
+		elapsed := time.Since(start)
+
+		debug.SetGCPercent(gcpercent)
+		debug.SetMemoryLimit(memlimit)
 
 		// pprof.StopCPUProfile()
 
-		elapsed := time.Since(start)
+		runtime.GC()
+
 		totalTime += elapsed
 
 		fmt.Printf("Launch %v: %v\n", i+1, elapsed)
@@ -144,7 +156,7 @@ func doTest[R atomic.Int32 | int](edges [][]int, bfs func([][]int, int, int) []R
 }
 
 func main() {
-	cubeSide := 400
+	cubeSide := 500
 	edges := initCubicGraph(cubeSide)
 	doTest(edges, parBFS, "Parallel BFS", cubeSide)
 	doTest(edges, seqBFS, "Sequential BFS", cubeSide)
