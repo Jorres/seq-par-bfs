@@ -1,6 +1,8 @@
 ## Практическое задание 2, seq-par bfs
 
-Весь код находится в одном файле - main.go.
+Весь осмысленный код находится в одном файле - `main.go`
+
+Код для параллельной обработки массивов - parFor, parMap, parFilter - находится в `par_processing.go`
 
 #### Если у вас есть go
 
@@ -8,6 +10,26 @@
 
 ```
 GOMAXPROCS=4 go run main.go par_processing.go
+```
+
+Вы должны увидеть что-то вроде:
+```
+❯ GOMAXPROCS=4 go run main.go par_processing.go
+Parallel BFS, averaged over 5 launches
+
+Launch 1: 15.656598924s
+...
+Launch 5: 16.035953028s
+
+Average time: 15.525839636s
+
+Sequential BFS, averaged over 5 launches
+
+Launch 1: 43.047286164s
+...
+Launch 5: 43.966011356s
+
+Average time: 43.491455348s
 ```
 
 Убедиться, что GOMAXPROCS=4 действительно не дает сожрать больше 400% cpu, можно, открыв рядышком `top`.
